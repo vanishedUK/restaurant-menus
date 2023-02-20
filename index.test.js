@@ -1,5 +1,5 @@
 const { sequelize } = require('./db');
-const { Restaurant, Menu } = require('./models/index');
+const { Restaurant, Menu, Items } = require('./models/index');
 const { seedRestaurant, seedMenu } = require('./seedData');
 
 describe('Restaurant and Menu Models', () => {
@@ -26,12 +26,17 @@ describe('Restaurant and Menu Models', () => {
 
   test('can create a Menu', async () => {
     // create a new menu
-    const menu = await Menu.create({
+    const menu_1 = await Menu.create({
       title: 'La Cuisine',
     });
 
+    const menu_2 = await Menu.create({
+      title: 'Fried Chickene'
+    })
+
     // verify that the menu was created with the correct attributes
-    expect(menu.title).toEqual('La Cuisine');
+    expect(menu_1.title).toEqual('La Cuisine');
+    expect(menu_2.title).toEqual('Fried Chickene')
   });
 
   test('can find Restaurants', async () => {
@@ -76,6 +81,46 @@ describe('Restaurant and Menu Models', () => {
 
     // verify that the restaurant was deleted
     expect(foundRestaurant).toBeNull();
+  });
+
+
+  test('Find all menus with items', async () => {
+    // create a new menu
+    const menu_1 = await Menu.create({
+      title: 'La Cuisine',
+    });
+
+    const menu_2 = await Menu.create({
+      title: 'Fried Chickene'
+    })
+
+    // create new items
+    const item_1 = await Items.create({
+      name: 'Pizza',
+      image: 'https://en.wikipedia.org/wiki/File:Eq_it-na_pizza-margherita_sep2005_sml.jpg',
+      price: 11.5,
+      vegetarian: true,
+      MenuId: menu_1.id
+    });
+    
+    const item_2 = await Items.create({
+      name: 'Fried Chicken',
+      image: 'https://en.wikipedia.org/wiki/File:Fried-Chicken-Set.jpg',
+      price: 8.25,
+      vegetarian: false,
+      MenuId: menu_2.id
+    });
+
+    // find all menus with items
+    const result = await Menu.findAll({include: Items});
+
+    // menu 1
+    expect(result[0].title).toBe('La Cuisine');
+    expect(result[0].Items[0].name).toBe('Pizza')
+
+    // menu 2
+    expect(result[1].title).toBe('Fried Chickene');
+    expect(result[1].Items[0].name).toBe('Fried Chicken')
   });
 
   afterAll(async () => {
